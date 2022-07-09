@@ -1,2 +1,2 @@
 # kaiyo-bot
- a rienforcement learning agent that plays rocket league
+ a reinforcement learning agent that plays rocket league
