@@ -1,27 +1,43 @@
 import sys
 from redis import Redis
+from redis.retry import Retry
+from redis.backoff import ExponentialBackoff
 from rlgym.envs import Match
 from rlgym_tools.extra_obs.advanced_padder import AdvancedObsPadder
 from rlgym.utils.state_setters import DefaultState
 from rlgym.utils.terminal_conditions.common_conditions import TimeoutCondition, NoTouchTimeoutCondition, GoalScoredCondition
-from rocket_learn.rollout_generator.redis_rollout_generator import RedisRolloutWorker
+from rocket_learn.rollout_generator.redis.redis_rollout_worker import RedisRolloutWorker
 from N_Parser import NectoAction
 from kaiyo_rewards import KaiyoRewards
 from torch import set_num_threads
+import os
 set_num_threads(1)
 
 
 if __name__ == "__main__":
     rew = KaiyoRewards()
     frame_skip = 8
-    fps = 120 / frame_skip
-    ts_index = int(sys.argv[1])
-    team_sizes = [1, 2, 3, 1, 1, 2, 3, 1, 1, 2, 3, 1, 2, 1, 3, 1, 2, 3, 1, 2, 1, 3, 1, 2, 1, 3, 2, 1, 3, 2, 1, 1, 3, 2]
+    fps = 120 // frame_skip
+    name = "Default"
+    send_gamestate = False
+    local = True
+    host = "127.0.0.1"
+    if len(sys.argv) > 1:
+        host = sys.argv[1]
+        if host != "127.0.0.1" and host != "localhost":
+            local = False
+    if len(sys.argv) > 2:
+        name = sys.argv[2]
+    if len(sys.argv) > 3:
+        if sys.argv[3] == 'GAMESTATE':
+            send_gamestate = True
+    # ts_index = int(sys.argv[1])
+    # team_sizes = [1, 2, 3, 1, 1, 2, 3, 1, 1, 2, 3, 1, 2, 1, 3, 1, 2, 3, 1, 2, 1, 3, 1, 2, 1, 3, 2, 1, 3, 2, 1, 1, 3, 2]
 
     match = Match(
         game_speed=100,
-        self_play=True,
-        team_size=team_size,
+        spawn_opponents=True,
+        team_size=3,
         state_setter=DefaultState(),
         obs_builder=AdvancedObsPadder(team_size=3, expanding=True),
         action_parser=NectoAction(),
@@ -29,8 +45,31 @@ if __name__ == "__main__":
         reward_function=rew
     )
 
-    r = Redis(password="password")
-    RedisRolloutWorker(r, "kaiyo", match, past_version_prob=0.2, sigma_target=2,
-                       send_gamestates=False, evaluation_prob=0.01, force_paging=True, deterministic_old_prob=0.5).run()
+    # local Redis
+    if local:
+        r = Redis(host=host,
+                  username="user1",
+                  password=os.environ["redis_user1_key"],
+                  )
+
+    # remote Redis
+    else:
+        # noinspection PyArgumentList
+        r = Redis(host=host,
+                  username="user1",
+                  password=os.environ["redis_user1_key"],
+                  retry_on_error=[ConnectionError, TimeoutError],
+                  retry=Retry(ExponentialBackoff(cap=10, base=1), 25)
+                  )
+    RedisRolloutWorker(r, name, match,
+                       past_version_prob=0.2,
+                       sigma_target=2,
+                       evaluation_prob=0.01,
+                       force_paging=True,
+                       dynamic_gm=True,
+                       send_obs=True,
+                       auto_minimize=True,
+                       send_gamestates=send_gamestate,
+                       ).run()
 
 
