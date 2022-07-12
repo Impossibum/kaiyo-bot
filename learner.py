@@ -104,6 +104,10 @@ if __name__ == "__main__":
         zero_grads_with_none=True,
     )
 
+    alg.load("kaiyo-bot/KaiBumBot_1657505668.146788/KaiBumBot_540/checkpoint.pt")
+    alg.agent.optimizer.param_groups[0]["lr"] = logger.config.learning_rate_actor
+    alg.agent.optimizer.param_groups[1]["lr"] = logger.config.learning_rate_critic
+
     alg.run(iterations_per_save=logger.config.save_every, save_dir="kaiyo-bot")
 
 
