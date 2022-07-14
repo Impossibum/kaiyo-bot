@@ -7,6 +7,9 @@ from rlgym_tools.extra_obs.advanced_padder import AdvancedObsPadder
 from rlgym.utils.state_setters import DefaultState
 from rlgym.utils.terminal_conditions.common_conditions import TimeoutCondition, NoTouchTimeoutCondition, GoalScoredCondition
 from rocket_learn.rollout_generator.redis.redis_rollout_worker import RedisRolloutWorker
+from rlgym_tools.extra_state_setters.replay_setter import ReplaySetter
+from rlgym_tools.extra_state_setters.weighted_sample_setter import WeightedSampleSetter
+from rlgym_tools.extra_state_setters.augment_setter import AugmentSetter
 from N_Parser import NectoAction
 from kaiyo_rewards import KaiyoRewards
 from torch import set_num_threads
@@ -34,11 +37,18 @@ if __name__ == "__main__":
     # ts_index = int(sys.argv[1])
     # team_sizes = [1, 2, 3, 1, 1, 2, 3, 1, 1, 2, 3, 1, 2, 1, 3, 1, 2, 3, 1, 2, 1, 3, 1, 2, 1, 3, 2, 1, 3, 2, 1, 1, 3, 2]
 
+    replay_options = ["ssl_3v3.npy"]
+
     match = Match(
         game_speed=100,
         spawn_opponents=True,
         team_size=3,
-        state_setter=DefaultState(),
+        state_setter=WeightedSampleSetter((
+            DefaultState(),
+            AugmentSetter(
+                ReplaySetter(replay_options[2])
+            )),
+            (0.2, 0.8)),
         obs_builder=AdvancedObsPadder(team_size=3, expanding=True),
         action_parser=NectoAction(),
         terminal_conditions=[TimeoutCondition(fps * 300), NoTouchTimeoutCondition(fps * 45), GoalScoredCondition()],
