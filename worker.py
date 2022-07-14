@@ -46,9 +46,9 @@ if __name__ == "__main__":
         state_setter=WeightedSampleSetter((
             DefaultState(),
             AugmentSetter(
-                ReplaySetter(replay_options[2])
+                ReplaySetter(replay_options[0])
             )),
-            (0.2, 0.8)),
+            (1, 0)),
         obs_builder=AdvancedObsPadder(team_size=3, expanding=True),
         action_parser=NectoAction(),
         terminal_conditions=[TimeoutCondition(fps * 300), NoTouchTimeoutCondition(fps * 45), GoalScoredCondition()],
