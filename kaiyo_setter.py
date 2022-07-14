@@ -21,8 +21,6 @@ class KaiyoSetter(DynamicGMSetter):
                     (0.15, 0.85)
                 )
             )
-        self.blue = 0
-        self.orange = 0
 
     def reset(self, state_wrapper: StateWrapper):
-        self.setters[self.blue-1].reset(state_wrapper)
+        self.setters[(len(state_wrapper.cars) // 2) - 1].reset(state_wrapper)
