@@ -2,6 +2,7 @@ import sys
 from redis import Redis
 from redis.retry import Retry
 from redis.backoff import ExponentialBackoff
+from redis.exceptions import ConnectionError, TimeoutError
 from rlgym.envs import Match
 from rlgym_tools.extra_obs.advanced_padder import AdvancedObsPadder
 from rlgym.utils.terminal_conditions.common_conditions import TimeoutCondition, NoTouchTimeoutCondition, GoalScoredCondition
