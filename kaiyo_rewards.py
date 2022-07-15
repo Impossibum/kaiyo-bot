@@ -25,7 +25,7 @@ class KaiyoRewards(RewardFunction):
              #  OmniBoostDiscipline()  self.boost_disc_weight - Don't add until solid game mechanics learned and boost abuse is observed
 
              ),
-            (0.5, 0.0025, 0.05, 1.0, 2.0))
+            (0.35, 0, 0.05, 1.0, 2.0))
 
     def reset(self, initial_state: GameState) -> None:
         self.reward.reset(initial_state)
