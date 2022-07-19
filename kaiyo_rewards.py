@@ -11,9 +11,9 @@ class KaiyoRewards(RewardFunction):
     def __init__(self):
         super().__init__()
         self.goal_weight = 10
-        self.boost_weight = 1.5
+        self.boost_weight = 1.0  # 1.5 -> 1.0 at 3.77b
         self.demo_weight = 3
-        self.boost_disc_weight = self.boost_weight * 0.02223
+        self.boost_disc_weight = self.boost_weight * 0.02223  # added height cutoff at 3.77b
         self.reward = CombinedReward(
             (
              TouchVelChange(),

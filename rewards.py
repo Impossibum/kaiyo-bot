@@ -74,7 +74,10 @@ class OmniBoostDiscipline(RewardFunction):
 
     def get_reward(self, player: PlayerData, state: GameState, previous_action: np.ndarray) -> float:
         old, self.values[player.car_id] = self.values[player.car_id], player.boost_amount
-        return -int(self.values[player.car_id] < old)
+        if player.car_data.position[2] < (2 * BALL_RADIUS):
+            return -int(self.values[player.car_id] < old)
+        else:
+            return 0
 
 
 if __name__ == "__main__":
