@@ -22,10 +22,10 @@ class KaiyoRewards(RewardFunction):
              # EventReward(goal=5.0, concede=-5.0)  #  replace this event reward with one below after basic proficiency is gained
              EventReward(team_goal=self.goal_weight, concede=-self.goal_weight, demo=self.demo_weight, boost_pickup=self.boost_weight),  # 1.0
              JumpTouchReward(min_height=120),  # 2.0  - add when introducing new event reward
-             #  OmniBoostDiscipline()  self.boost_disc_weight - Don't add until solid game mechanics learned and boost abuse is observed
+             OmniBoostDiscipline()   # self.boost_disc_weight - Don't add until solid game mechanics learned and boost abuse is observed
 
              ),
-            (0.35, 0, 0.05, 1.0, 2.0))
+            (0.35, 0, 0.05, 1.0, 2.0, self.boost_disc_weight))
 
     def reset(self, initial_state: GameState) -> None:
         self.reward.reset(initial_state)
