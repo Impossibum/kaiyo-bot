@@ -11,7 +11,7 @@ class KaiyoRewards(RewardFunction):
     def __init__(self):
         super().__init__()
         self.goal_weight = 10
-        self.boost_weight = 1.0  # 1.5 -> 1.0 at 3.77b
+        self.boost_weight = 1.5  # 1.5 -> 1.0 at 3.77b -> 1.5 4.2b
         self.demo_weight = 3
         self.boost_disc_weight = self.boost_weight * 0.02223  # added height cutoff at 3.77b
         self.reward = CombinedReward(
@@ -25,7 +25,7 @@ class KaiyoRewards(RewardFunction):
              OmniBoostDiscipline()   # self.boost_disc_weight - Don't add until solid game mechanics learned and boost abuse is observed
 
              ),
-            (0.35, 0, 0.05, 1.0, 2.0, self.boost_disc_weight))
+            (0.5, 0, 0.05, 1.0, 2.0, self.boost_disc_weight))
 
     def reset(self, initial_state: GameState) -> None:
         self.reward.reset(initial_state)
