@@ -114,7 +114,7 @@ class ZeroSumReward(RewardFunction):
                 # cons air touches, only rewards 2nd touch and after, max reward of 20, initial reward 1.6
                 if last.ball_touched and state.ball.position[2] > 120:
                     self.cons_touches += 1
-                    player_rewards[i] += min(self.cons_air_touches_w * (1.6 ** self.cons_touches), 20)
+                    player_rewards[i] += self.cons_air_touches_w * min((1.6 ** self.cons_touches), 20) / 20
                 else:
                     self.cons_touches = 0
 
