@@ -62,6 +62,7 @@ class ZeroSumReward(RewardFunction):
         self.orange_touch_timer = self.touch_timeout + 1
         self.blue_toucher = None
         self.orange_toucher = None
+        # self.last_toucher = None
         self.team_spirit = team_spirit
         self.n = 0
         self.cons_touches = 0
@@ -83,6 +84,7 @@ class ZeroSumReward(RewardFunction):
             last = self.last_state.players[i]
 
             if player.ball_touched:
+                # self.last_toucher = i
                 if player.team_num == BLUE_TEAM:
                     self.blue_toucher = i
                     self.blue_touch_timer = 0
@@ -111,12 +113,12 @@ class ZeroSumReward(RewardFunction):
                 # if player.on_ground and state.ball.position[2] > min_height:
                 #     player_self_rewards[i] += self.wall_touch_w * (state.ball.position[2] - min_height) / rnge
 
-                # cons air touches, only rewards 2nd touch and after, max reward of 20, initial reward 1.6
-                if last.ball_touched and state.ball.position[2] > 120:
-                    self.cons_touches += 1
-                    player_rewards[i] += self.cons_air_touches_w * min((1.6 ** self.cons_touches), 20) / 20
-                else:
-                    self.cons_touches = 0
+                # cons air touches, max reward of 20, initial reward 1.6
+                # if state.ball.position[2] > 120 and self.last_toucher == i:
+                #     self.cons_touches += 1
+                #     player_rewards[i] += self.cons_air_touches_w * min((1.6 ** self.cons_touches), 20) / 20
+                # else:
+                #     self.cons_touches = 0
 
             # vel bg
             if self.blue_toucher is not None or self.orange_toucher is not None:
@@ -222,6 +224,7 @@ class ZeroSumReward(RewardFunction):
         self.current_state = initial_state
         self.blue_toucher = None
         self.orange_toucher = None
+        # self.last_toucher = None
         self.blue_touch_timer = self.touch_timeout + 1
         self.orange_touch_timer = self.touch_timeout + 1
         self.cons_touches = 0
