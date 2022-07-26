@@ -34,13 +34,12 @@ class MillennialKickoffReward(RewardFunction):
         pass
 
     def closest_to_ball(self, player: PlayerData, state: GameState) -> bool:
-        player_dist = distance(player.car_data.position, state.ball.position)
+        player_dist = np.linalg.norm(player.car_data.position - state.ball.position)
         for p in state.players:
             if p.team_num == player.team_num and p.car_id != p.car_id:
                 dist = np.linalg.norm(p.car_data.position - state.ball.position)
                 if dist < player_dist:
                     return False
-
         return True
 
     def get_reward(self, player: PlayerData, state: GameState, previous_action: np.ndarray) -> float:

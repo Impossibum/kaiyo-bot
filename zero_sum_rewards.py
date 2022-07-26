@@ -7,6 +7,16 @@ from rlgym.utils.reward_functions import RewardFunction
 from numpy.linalg import norm
 
 
+def _closest_to_ball(player: PlayerData, state: GameState) -> bool:
+    player_dist = np.linalg.norm(player.car_data.position - state.ball.position)
+    for p in state.players:
+        if p.team_num == player.team_num and p.car_id != p.car_id:
+            dist = np.linalg.norm(p.car_data.position - state.ball.position)
+            if dist < player_dist:
+                return False
+    return True
+
+
 class ZeroSumReward(RewardFunction):
 
     def __init__(
@@ -29,6 +39,7 @@ class ZeroSumReward(RewardFunction):
         cons_air_touches_w=5,
         demo_w=4,  # 3->4 at 6.87b
         # got_demoed_w=0,
+        kickoff_w=0.05,
         tick_skip=8,
         team_spirit=1,
     ):
@@ -50,6 +61,7 @@ class ZeroSumReward(RewardFunction):
         # self.got_demoed_w = got_demoed_w
         # self.dist_pb_w = dist_pb_w
         # self.face_ball_w = face_ball_w
+        self.kickoff_w = kickoff_w
         self.rewards = None
         self.current_state = None
         self.last_state = None
@@ -75,7 +87,7 @@ class ZeroSumReward(RewardFunction):
             self.kickoff_timer += 1
         # Calculate rewards
         player_rewards = np.zeros(len(state.players))
-        # player_self_rewards = np.zeros(len(state.players))
+        player_self_rewards = np.zeros(len(state.players))
         # ball_height = state.ball.position[2]
 
         for i, player in enumerate(state.players):
@@ -187,6 +199,10 @@ class ZeroSumReward(RewardFunction):
             # last_car_vel = last.car_data.linear_velocity
             # player_rewards[i] += self.acel_car_w * (norm(curr_car_vel - last_car_vel) / CAR_MAX_SPEED)
 
+            # kickoff reward
+            if state.ball.position[0] == 0 and state.ball.position[1] == 0 and _closest_to_ball(player, state):
+                player_self_rewards[i] += self.kickoff_w * -1
+
         mid = len(player_rewards) // 2
 
         # Handle goals with no scorer for critic consistency,
@@ -216,7 +232,7 @@ class ZeroSumReward(RewardFunction):
         player_rewards[mid:] -= blue_mean
 
         self.last_state = state
-        self.rewards = player_rewards # + player_self_rewards
+        self.rewards = player_rewards + player_self_rewards
         # print(self.rewards)
 
     def reset(self, initial_state: GameState):
