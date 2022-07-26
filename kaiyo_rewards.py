@@ -11,9 +11,9 @@ class KaiyoRewards(RewardFunction):
     def __init__(self):
         super().__init__()
         self.goal_weight = 10
-        self.boost_weight = 1.5
+        self.boost_weight = 1.5  # 1.5 -> 1.0 at 3.77b -> 1.5 4.2b
         self.demo_weight = 3
-        self.boost_disc_weight = self.boost_weight * 0.02223
+        self.boost_disc_weight = self.boost_weight * 0.02223  # added height cutoff at 3.77b
         self.reward = CombinedReward(
             (
              TouchVelChange(),
@@ -22,10 +22,10 @@ class KaiyoRewards(RewardFunction):
              # EventReward(goal=5.0, concede=-5.0)  #  replace this event reward with one below after basic proficiency is gained
              EventReward(team_goal=self.goal_weight, concede=-self.goal_weight, demo=self.demo_weight, boost_pickup=self.boost_weight),  # 1.0
              JumpTouchReward(min_height=120),  # 2.0  - add when introducing new event reward
-             #  OmniBoostDiscipline()  self.boost_disc_weight - Don't add until solid game mechanics learned and boost abuse is observed
+             OmniBoostDiscipline()   # self.boost_disc_weight - Don't add until solid game mechanics learned and boost abuse is observed
 
              ),
-            (0.75, 0.005, 0.05, 1.0, 2.0))
+            (0.5, 0, 0.05, 1.0, 2.0, self.boost_disc_weight))
 
     def reset(self, initial_state: GameState) -> None:
         self.reward.reset(initial_state)

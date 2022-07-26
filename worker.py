@@ -2,20 +2,22 @@ import sys
 from redis import Redis
 from redis.retry import Retry
 from redis.backoff import ExponentialBackoff
+from redis.exceptions import ConnectionError, TimeoutError
 from rlgym.envs import Match
 from rlgym_tools.extra_obs.advanced_padder import AdvancedObsPadder
 from rlgym.utils.terminal_conditions.common_conditions import TimeoutCondition, NoTouchTimeoutCondition, GoalScoredCondition
 from rocket_learn.rollout_generator.redis.redis_rollout_worker import RedisRolloutWorker
 from kaiyo_setter import KaiyoSetter
 from N_Parser import NectoAction
-from kaiyo_rewards import KaiyoRewards
+#from kaiyo_rewards import KaiyoRewards
+from zero_sum_rewards import ZeroSumReward
 from torch import set_num_threads
 import os
 set_num_threads(1)
 
 
 if __name__ == "__main__":
-    rew = KaiyoRewards()
+    rew = ZeroSumReward()
     frame_skip = 8
     fps = 120 // frame_skip
     name = "Default"

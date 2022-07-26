@@ -12,7 +12,8 @@ from rlgym_tools.extra_obs.advanced_padder import AdvancedObsPadder
 
 from N_Parser import NectoAction
 import numpy as np
-from kaiyo_rewards import KaiyoRewards
+# from kaiyo_rewards import KaiyoRewards
+from zero_sum_rewards import ZeroSumReward
 
 import os
 from torch import set_num_threads
@@ -59,7 +60,7 @@ if __name__ == "__main__":
     rollout_gen = RedisRolloutGenerator("KaiBumBot",
                                         redis,
                                         lambda: AdvancedObsPadder(team_size=3, expanding=True),
-                                        lambda: KaiyoRewards(),
+                                        lambda: ZeroSumReward(),
                                         lambda: NectoAction(),
                                         save_every=logger.config.save_every,
                                         model_every=logger.config.model_every,
@@ -104,7 +105,7 @@ if __name__ == "__main__":
         zero_grads_with_none=True,
     )
 
-    alg.load("kaiyo-bot/KaiBumBot_1657680676.1366363/KaiBumBot_1280/checkpoint.pt")
+    alg.load("kaiyo-bot/KaiBumBot_1658805074.8443048/KaiBumBot_6870/checkpoint.pt")
     alg.agent.optimizer.param_groups[0]["lr"] = logger.config.actor_lr
     alg.agent.optimizer.param_groups[1]["lr"] = logger.config.critic_lr
 
