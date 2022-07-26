@@ -11,6 +11,7 @@ from kaiyo_setter import KaiyoSetter
 from N_Parser import NectoAction
 #from kaiyo_rewards import KaiyoRewards
 from zero_sum_rewards import ZeroSumReward
+from pretrained_agents.necto.necto_v1 import NectoV1
 from torch import set_num_threads
 import os
 set_num_threads(1)
@@ -61,6 +62,12 @@ if __name__ == "__main__":
                   retry_on_error=[ConnectionError, TimeoutError],
                   retry=Retry(ExponentialBackoff(cap=10, base=1), 25)
                   )
+
+    model_name = "necto-model-30Y.pt"
+    nectov1 = NectoV1(model_string=model_name, n_players=6)
+
+    pretrained_agents = {nectov1: .025}
+
     RedisRolloutWorker(r, name, match,
                        past_version_prob=0.2,
                        sigma_target=2,
@@ -70,6 +77,7 @@ if __name__ == "__main__":
                        send_obs=True,
                        auto_minimize=True,
                        send_gamestates=send_gamestate,
+                       # pretrained_agents=pretrained_agents,
                        ).run()
 
 

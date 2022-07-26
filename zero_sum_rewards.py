@@ -124,7 +124,7 @@ class ZeroSumReward(RewardFunction):
                 #     player_self_rewards[i] += self.wall_touch_w * (state.ball.position[2] - min_height) / rnge
 
                 # cons air touches, max reward of 5, normalized to 1, initial reward 1.4, only starts at second touch
-                if state.ball.position[2] > 120 and last.ball_touched:
+                if state.ball.position[2] > 140 and last.ball_touched and not player.on_ground:
                     self.cons_touches += 1
                     player_rewards[i] += self.cons_air_touches_w * min((1.4 ** self.cons_touches), 5) / 5
                 else:
