@@ -1,7 +1,5 @@
-import numpy as np
 from rlgym.utils.common_values import BLUE_TEAM, BLUE_GOAL_BACK, ORANGE_GOAL_BACK, ORANGE_TEAM, BALL_MAX_SPEED, \
     CAR_MAX_SPEED, BALL_RADIUS, GOAL_HEIGHT, CEILING_Z
-from rlgym.utils.math import cosine_similarity
 from rlgym.utils.reward_functions.common_rewards.misc_rewards import *
 from rlgym.utils.reward_functions.common_rewards.conditional_rewards import *
 from rlgym.utils.reward_functions import RewardFunction
@@ -28,8 +26,8 @@ class ZeroSumReward(RewardFunction):
         # ball_touch_dribble_w=0,
         jump_touch_w=2,
         # wall_touch_w=0,
-        cons_air_touches_w=20,
-        demo_w=3,
+        cons_air_touches_w=5,
+        demo_w=4,  # 3->4 at 6.87b
         # got_demoed_w=0,
         tick_skip=8,
         team_spirit=1,
@@ -113,12 +111,16 @@ class ZeroSumReward(RewardFunction):
                 # if player.on_ground and state.ball.position[2] > min_height:
                 #     player_self_rewards[i] += self.wall_touch_w * (state.ball.position[2] - min_height) / rnge
 
-                # cons air touches, max reward of 20, initial reward 1.6
-                # if state.ball.position[2] > 120 and self.last_toucher == i:
-                #     self.cons_touches += 1
-                #     player_rewards[i] += self.cons_air_touches_w * min((1.6 ** self.cons_touches), 20) / 20
-                # else:
-                #     self.cons_touches = 0
+                # cons air touches, max reward of 5, normalized to 1, initial reward 1.4, only starts at second touch
+                if state.ball.position[2] > 120 and last.ball_touched:
+                    self.cons_touches += 1
+                    player_rewards[i] += self.cons_air_touches_w * min((1.4 ** self.cons_touches), 5) / 5
+                else:
+                    self.cons_touches = 0
+            # not touched by this player
+            else:
+                if last.ball_touched:
+                    self.cons_touches = 0
 
             # vel bg
             if self.blue_toucher is not None or self.orange_toucher is not None:
