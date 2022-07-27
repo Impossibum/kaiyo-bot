@@ -6,6 +6,32 @@ from rlgym.utils.reward_functions import RewardFunction
 
 from numpy.linalg import norm
 
+from typing import Tuple
+
+
+# def _closest_to_ball(state: GameState) -> Tuple[int, int]:
+#     #returns [blue_closest, orange_closest]
+#     length = len(state.players)
+#     orange_dist = [100_000]* (length // 2)
+#     blue_dist = [100_000] * (length // 2)
+#
+#     for i, player in enumerate(state.players):
+#         dist = np.linalg.norm(player.car_data.position - state.ball.position)
+#         if player.team_num == BLUE_TEAM:
+#             blue_dist[i] = dist
+#         else:
+#             orange_dist[i] = dist
+#     min = -1
+#     for i in range(orange_dist):
+#
+#             if dist < player_dist:
+#                 return False
+#             if dist == player_dist:  # left goes!
+#                 if player.team_num == BLUE_TEAM and player.car_data.position[0] > p.car_data.position[0]:
+#                     return True
+#                 if player.team_num == ORANGE_TEAM and player.car_data.position[0] < p.car_data.position[0]:
+#                     return True
+#     return True
 
 def _closest_to_ball(player: PlayerData, state: GameState) -> bool:
     player_dist = np.linalg.norm(player.car_data.position - state.ball.position)
@@ -14,6 +40,11 @@ def _closest_to_ball(player: PlayerData, state: GameState) -> bool:
             dist = np.linalg.norm(p.car_data.position - state.ball.position)
             if dist < player_dist:
                 return False
+            if dist == player_dist:  # left goes!
+                if player.team_num == BLUE_TEAM and player.car_data.position[0] > p.car_data.position[0]:
+                    return True
+                if player.team_num == ORANGE_TEAM and player.car_data.position[0] < p.car_data.position[0]:
+                    return True
     return True
 
 
@@ -31,8 +62,8 @@ class ZeroSumReward(RewardFunction):
         # ball_touch_w=0,
         # touch_grass_w=0,
         acel_ball_w=0.1,
-        boost_gain_w=1.5,
-        #boost_spend_w=boost_gain_w *  0.02223,
+        boost_gain_w=1,  # 1.5 -> 0.5 at 7.18b, was maybe 1 originally?
+        boost_spend_w=0.025,  # 0.033 -> 0.025 7.18b
         # ball_touch_dribble_w=0,
         jump_touch_w=2,
         # wall_touch_w=0,
@@ -52,7 +83,7 @@ class ZeroSumReward(RewardFunction):
         # self.touch_grass_w = touch_grass_w
         self.acel_ball_w = acel_ball_w
         self.boost_gain_w = boost_gain_w
-        self.boost_spend_w = self.boost_gain_w * 0.02223
+        self.boost_spend_w = boost_spend_w
         # self.ball_touch_dribble_w = ball_touch_dribble_w
         self.jump_touch_w = jump_touch_w
         # self.wall_touch_w = wall_touch_w
@@ -68,6 +99,8 @@ class ZeroSumReward(RewardFunction):
         self.touch_timeout = 8 * 120 // tick_skip  # 120 ticks at 8 tick skip is 8 seconds
         self.kickoff_timeout = 5 * 120 // tick_skip
         self.kickoff_timer = 0
+        # self.closest_reset_blue = -1
+        # self.closest_reset_orange = -1
         self.blue_touch_timer = self.touch_timeout + 1
         self.orange_touch_timer = self.touch_timeout + 1
         self.blue_toucher = None
@@ -246,6 +279,8 @@ class ZeroSumReward(RewardFunction):
         self.blue_touch_timer = self.touch_timeout + 1
         self.orange_touch_timer = self.touch_timeout + 1
         self.cons_touches = 0
+        self.kickoff_timer = 0
+        # self.closest_reset_blue, self.closest_reset_orange = _closest_to_ball(initial_state)
 
     def get_reward(self, player: PlayerData, state: GameState, previous_action: np.ndarray) -> float:
         rew = self.rewards[self.n]
