@@ -6,24 +6,45 @@ from rlgym.utils.reward_functions import RewardFunction
 
 from numpy.linalg import norm
 
-from typing import Tuple
+from typing import Tuple, List
 
 
-# def _closest_to_ball(state: GameState) -> Tuple[int, int]:
-#     #returns [blue_closest, orange_closest]
-#     length = len(state.players)
-#     orange_dist = [100_000]* (length // 2)
-#     blue_dist = [100_000] * (length // 2)
-#
-#     for i, player in enumerate(state.players):
-#         dist = np.linalg.norm(player.car_data.position - state.ball.position)
-#         if player.team_num == BLUE_TEAM:
-#             blue_dist[i] = dist
-#         else:
-#             orange_dist[i] = dist
-#     min = -1
-#     for i in range(orange_dist):
-#
+def _closest_to_ball(state: GameState) -> Tuple[int, int]:
+    #returns [blue_closest, orange_closest]
+    length = len(state.players)
+    dist_list: List[float] = [100_000] * length
+    blue_closest = -1
+    orange_closest = -1
+    for i, player in enumerate(state.players):
+        dist = np.linalg.norm(player.car_data.position - state.ball.position)
+        dist_list[i] = dist
+        if state.players[i].team_num == BLUE_TEAM and blue_closest == -1:
+            blue_closest = i
+        elif state.players[i].team_num == ORANGE_TEAM and orange_closest == -1:
+            orange_closest = i
+        elif state.players[i].team_num == BLUE_TEAM and dist <= dist_list[blue_closest]:
+            if dist == dist_list[blue_closest]:
+                if state.players[i].car_data.position[0] > state.players[blue_closest].car_data.position[0]:
+                    blue_closest = i
+                    continue
+            else:
+                blue_closest = i
+                continue
+        elif state.players[i].team_num == ORANGE_TEAM and dist <= dist_list[orange_closest]:
+            if dist == dist_list[orange_closest]:
+                if state.players[i].car_data.position[0] < state.players[orange_closest].car_data.position[0]:
+                    orange_closest = i
+                    continue
+            else:
+                orange_closest = i
+                continue
+    return blue_closest, orange_closest
+
+# def _closest_to_ball(player: PlayerData, state: GameState) -> bool:
+#     player_dist = np.linalg.norm(player.car_data.position - state.ball.position)
+#     for p in state.players:
+#         if p.team_num == player.team_num and p.car_id != p.car_id:
+#             dist = np.linalg.norm(p.car_data.position - state.ball.position)
 #             if dist < player_dist:
 #                 return False
 #             if dist == player_dist:  # left goes!
@@ -32,20 +53,6 @@ from typing import Tuple
 #                 if player.team_num == ORANGE_TEAM and player.car_data.position[0] < p.car_data.position[0]:
 #                     return True
 #     return True
-
-def _closest_to_ball(player: PlayerData, state: GameState) -> bool:
-    player_dist = np.linalg.norm(player.car_data.position - state.ball.position)
-    for p in state.players:
-        if p.team_num == player.team_num and p.car_id != p.car_id:
-            dist = np.linalg.norm(p.car_data.position - state.ball.position)
-            if dist < player_dist:
-                return False
-            if dist == player_dist:  # left goes!
-                if player.team_num == BLUE_TEAM and player.car_data.position[0] > p.car_data.position[0]:
-                    return True
-                if player.team_num == ORANGE_TEAM and player.car_data.position[0] < p.car_data.position[0]:
-                    return True
-    return True
 
 
 class ZeroSumReward(RewardFunction):
@@ -99,8 +106,8 @@ class ZeroSumReward(RewardFunction):
         self.touch_timeout = 8 * 120 // tick_skip  # 120 ticks at 8 tick skip is 8 seconds
         self.kickoff_timeout = 5 * 120 // tick_skip
         self.kickoff_timer = 0
-        # self.closest_reset_blue = -1
-        # self.closest_reset_orange = -1
+        self.closest_reset_blue = -1
+        self.closest_reset_orange = -1
         self.blue_touch_timer = self.touch_timeout + 1
         self.orange_touch_timer = self.touch_timeout + 1
         self.blue_toucher = None
@@ -233,7 +240,9 @@ class ZeroSumReward(RewardFunction):
             # player_rewards[i] += self.acel_car_w * (norm(curr_car_vel - last_car_vel) / CAR_MAX_SPEED)
 
             # kickoff reward
-            if state.ball.position[0] == 0 and state.ball.position[1] == 0 and _closest_to_ball(player, state):
+            if state.ball.position[0] == 0 and state.ball.position[1] == 0 and \
+                    (self.closest_reset_blue == i or self.closest_reset_orange == i) and \
+                    self.kickoff_timer < self.kickoff_timeout:
                 player_self_rewards[i] += self.kickoff_w * -1
 
         mid = len(player_rewards) // 2
@@ -280,7 +289,7 @@ class ZeroSumReward(RewardFunction):
         self.orange_touch_timer = self.touch_timeout + 1
         self.cons_touches = 0
         self.kickoff_timer = 0
-        # self.closest_reset_blue, self.closest_reset_orange = _closest_to_ball(initial_state)
+        self.closest_reset_blue, self.closest_reset_orange = _closest_to_ball(initial_state)
 
     def get_reward(self, player: PlayerData, state: GameState, previous_action: np.ndarray) -> float:
         rew = self.rewards[self.n]
