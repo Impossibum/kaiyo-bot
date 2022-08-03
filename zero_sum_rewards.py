@@ -65,20 +65,20 @@ class ZeroSumReward(RewardFunction):
         # velocity_pb_w=0,
         # dist_pb_w=0,
         # face_ball_w=0,
-        velocity_bg_w=0.05,
+        velocity_bg_w=0.025,  # 0.5 -> 0.025 for tick skip, 10.05b
         # kickoff_w=0,
         # ball_touch_w=0,
         # touch_grass_w=0,
         acel_ball_w=0.1,
         boost_gain_w=1,  # 1.5 -> 1? at 7.18b, was maybe 1 originally?
-        boost_spend_w=0.033,  # 0.033 -> 0.025 7.18b, 0.025 -> 0.033 8.44b
+        boost_spend_w=0.015,  # 0.033 -> 0.025 7.18b, 0.025 -> 0.033 8.44b, ->0.015 10.05b for tick skip
         # ball_touch_dribble_w=0,
         jump_touch_w=3,  # 2 -> 3 at 8.44b
         # wall_touch_w=0,
         cons_air_touches_w=8,  # 5 -> 8 at 8.44b
         demo_w=6,  # 3->4 at 6.87b -> 6 at 9.36b
         # got_demoed_w=0,
-        kickoff_w=0.1,  # 0.05 -> 0.1 at 8.44b
+        kickoff_w=0.05,  # 0.05 -> 0.1 at 8.44b, 0.05 at 10.05b for tick skip
         tick_skip=FRAME_SKIP,
         team_spirit=1,
     ):
