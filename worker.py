@@ -14,6 +14,7 @@ from zero_sum_rewards import ZeroSumReward
 from pretrained_agents.necto.necto_v1 import NectoV1
 from torch import set_num_threads
 from Constants import FRAME_SKIP
+# from rocket_learn.agent.pretrained_agents.nexto.nexto_v2 import NextoV2
 import os
 set_num_threads(1)
 
@@ -66,8 +67,10 @@ if __name__ == "__main__":
 
     model_name = "necto-model-30Y.pt"
     nectov1 = NectoV1(model_string=model_name, n_players=6)
+    model_name = "nexto-model.pt"
+    # nexto = NextoV2(model_string=model_name, n_players=6)
 
-    pretrained_agents = {nectov1: .025}
+    # pretrained_agents = {nectov1: 0, nexto: 0.70}
 
     RedisRolloutWorker(r, name, match,
                        past_version_prob=0.2,
@@ -79,6 +82,7 @@ if __name__ == "__main__":
                        auto_minimize=True,
                        send_gamestates=send_gamestate,
                        # pretrained_agents=pretrained_agents,
+                       gamemode_weights=None,  # {'1v1': 0.3, '2v2': 0.25, '3v3': 0.45}  # testing weights
                        ).run()
 
 
