@@ -16,8 +16,9 @@ class AirTouch(StatTracker):
 
     def update(self, gamestates: np.ndarray, mask: np.ndarray):
         players = gamestates[:, StateConstants.PLAYERS]
-        is_touch = np.asarray([a * (not b) for a, b in
-                              zip(players[:, StateConstants.BALL_TOUCHED], players[:, StateConstants.ON_GROUND])])
+        is_touch = np.asarray([a * b for a, b in
+                              zip(players[:, StateConstants.BALL_TOUCHED],
+                                  np.invert(players[:, StateConstants.ON_GROUND].astype(bool)))])
 
         self.total_touches += np.sum(is_touch)
         self.count += is_touch.size
