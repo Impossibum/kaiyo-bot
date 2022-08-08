@@ -20,12 +20,13 @@ import os
 from torch import set_num_threads
 from rocket_learn.utils.stat_trackers.common_trackers import Speed, Demos, TimeoutRate, Touch, EpisodeLength, Boost, \
     BehindBall, TouchHeight, DistToBall
+from mybots_trackers import AirTouch, AirTouchHeight
 
 set_num_threads(1)
 
 if __name__ == "__main__":
     frame_skip = FRAME_SKIP
-    half_life_seconds = 8
+    half_life_seconds = 12  # 8 -> 12 at 12.53b
     fps = 120 / frame_skip
     gamma = np.exp(np.log(0.5) / (fps * half_life_seconds))
     print(f"_gamma is: {gamma}")
@@ -56,7 +57,8 @@ if __name__ == "__main__":
     redis.delete("worker-ids")
 
     stat_trackers = [
-        Speed(), Demos(), TimeoutRate(), Touch(), EpisodeLength(), Boost(), BehindBall(), TouchHeight(), DistToBall()
+        Speed(), Demos(), TimeoutRate(), Touch(), EpisodeLength(), Boost(), BehindBall(), TouchHeight(), DistToBall(),
+        AirTouch(), AirTouchHeight(),
     ]
     rollout_gen = RedisRolloutGenerator("KaiBumBot",
                                         redis,
@@ -106,7 +108,7 @@ if __name__ == "__main__":
         zero_grads_with_none=True,
     )
 
-    alg.load("kaiyo-bot/KaiBumBot_1659631287.3708844/KaiBumBot_10940/checkpoint.pt")
+    alg.load("kaiyo-bot/KaiBumBot_1659927057.740078/KaiBumBot_12530/checkpoint.ptt")
     alg.agent.optimizer.param_groups[0]["lr"] = logger.config.actor_lr
     alg.agent.optimizer.param_groups[1]["lr"] = logger.config.critic_lr
 
