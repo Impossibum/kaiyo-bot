@@ -93,7 +93,7 @@ class ZeroSumReward(RewardFunction):
         self.acel_ball_w = acel_ball_w
         self.boost_gain_w = boost_gain_w
         # self.boost_spend_w = boost_spend_w
-        self.boost_spend_w = self.boost_gain_w * ((33.3334 / (120 / tick_skip)) * 0.01)  # from Bum
+        self.boost_spend_w = 1.5 * self.boost_gain_w * ((33.3334 / (120 / tick_skip)) * 0.01)  # from Bum, *1.5 12.7b
         # self.ball_touch_dribble_w = ball_touch_dribble_w
         self.jump_touch_w = jump_touch_w
         # self.wall_touch_w = wall_touch_w
