@@ -31,16 +31,16 @@ if __name__ == "__main__":
     gamma = np.exp(np.log(0.5) / (fps * half_life_seconds))
     print(f"_gamma is: {gamma}")
     config = dict(
-        actor_lr=1e-4,
-        critic_lr=1e-4,
+        actor_lr=0,  # 1e-5,
+        critic_lr=1e-5,
 
-        n_steps=1_000_000,
-        batch_size=100_000,
+        n_steps=2_000_000,  # polishing at 13.1b
+        batch_size=200_000,
         minibatch_size=50_000,
-        epochs=30,
+        epochs=50,
         gamma=gamma,
-        save_every=10,
-        model_every=60,
+        save_every=5,
+        model_every=30,
         ent_coef=0.01,
     )
 
@@ -108,7 +108,7 @@ if __name__ == "__main__":
         zero_grads_with_none=True,
     )
 
-    alg.load("kaiyo-bot/KaiBumBot_1659987978.113457/KaiBumBot_12680/checkpoint.pt")
+    alg.load("kaiyo-bot/KaiBumBot_1660051383.585214/KaiBumBot_13140/checkpoint.pt")
     alg.agent.optimizer.param_groups[0]["lr"] = logger.config.actor_lr
     alg.agent.optimizer.param_groups[1]["lr"] = logger.config.critic_lr
 
