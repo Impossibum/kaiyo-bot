@@ -12,7 +12,6 @@ from rlgym_tools.extra_obs.advanced_padder import AdvancedObsPadder
 
 from N_Parser import NectoAction
 import numpy as np
-# from kaiyo_rewards import KaiyoRewards
 from zero_sum_rewards import ZeroSumReward
 from Constants import FRAME_SKIP
 
@@ -31,13 +30,13 @@ if __name__ == "__main__":
     gamma = np.exp(np.log(0.5) / (fps * half_life_seconds))
     print(f"_gamma is: {gamma}")
     config = dict(
-        actor_lr=0,  # 1e-5,
+        actor_lr=1e-5,
         critic_lr=1e-5,
 
         n_steps=2_000_000,  # polishing at 13.1b
         batch_size=200_000,
         minibatch_size=50_000,
-        epochs=50,
+        epochs=30,
         gamma=gamma,
         save_every=5,
         model_every=30,
@@ -71,7 +70,7 @@ if __name__ == "__main__":
                                         clear=False,
                                         stat_trackers=stat_trackers,
                                         # gamemodes=("1v1", "2v2", "3v3"),
-                                        max_age=1,
+                                        max_age=0,
                                         )
 
     critic = Sequential(Linear(237, 512), GELU(), Linear(512, 512), GELU(),
@@ -108,7 +107,7 @@ if __name__ == "__main__":
         zero_grads_with_none=True,
     )
 
-    alg.load("kaiyo-bot/KaiBumBot_1660051383.585214/KaiBumBot_13140/checkpoint.pt")
+    alg.load("kaiyo-bot/KaiBumBot_1660270979.5956304/KaiBumBot_13610/checkpoint.pt")
     alg.agent.optimizer.param_groups[0]["lr"] = logger.config.actor_lr
     alg.agent.optimizer.param_groups[1]["lr"] = logger.config.critic_lr
 
