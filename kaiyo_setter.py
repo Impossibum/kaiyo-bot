@@ -5,7 +5,7 @@ from rlgym_tools.extra_state_setters.replay_setter import ReplaySetter
 from rlgym_tools.extra_state_setters.weighted_sample_setter import WeightedSampleSetter
 from rlgym_tools.extra_state_setters.augment_setter import AugmentSetter
 from rlgym.utils.state_setters.random_state import RandomState
-from mybots_statesets import GroundAirDribble, WallDribble
+from mybots_statesets import GroundAirDribble, WallDribble, AirDrag
 
 
 class KaiyoSetter(DynamicGMSetter):
@@ -23,7 +23,7 @@ class KaiyoSetter(DynamicGMSetter):
                         AugmentSetter(RandomState(cars_on_ground=True)),
                         AugmentSetter(RandomState(cars_on_ground=False)),
                     ),
-                    (0.1, 0.70, 0.05, 0.05, 0.05, 0.05)
+                    (0.05, 0.50, 0.20, 0.20, 0.025, 0.025)
                 )
             )
 

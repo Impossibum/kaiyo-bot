@@ -3,12 +3,61 @@ from rlgym.utils.common_values import BLUE_TEAM, BLUE_GOAL_BACK, ORANGE_GOAL_BAC
 from rlgym.utils.reward_functions.common_rewards.misc_rewards import *
 from rlgym.utils.reward_functions.common_rewards.conditional_rewards import *
 from rlgym.utils.reward_functions import RewardFunction
+from Constants import FRAME_SKIP
 
 from numpy.linalg import norm
 
+from typing import Tuple, List
+
+
+def _closest_to_ball(state: GameState) -> Tuple[int, int]:
+    #returns [blue_closest, orange_closest]
+    length = len(state.players)
+    dist_list: List[float] = [100_000] * length
+    blue_closest = -1
+    orange_closest = -1
+    for i, player in enumerate(state.players):
+        dist = np.linalg.norm(player.car_data.position - state.ball.position)
+        dist_list[i] = dist
+        if state.players[i].team_num == BLUE_TEAM and blue_closest == -1:
+            blue_closest = i
+        elif state.players[i].team_num == ORANGE_TEAM and orange_closest == -1:
+            orange_closest = i
+        elif state.players[i].team_num == BLUE_TEAM and dist <= dist_list[blue_closest]:
+            if dist == dist_list[blue_closest]:
+                if state.players[i].car_data.position[0] > state.players[blue_closest].car_data.position[0]:
+                    blue_closest = i
+                    continue
+            else:
+                blue_closest = i
+                continue
+        elif state.players[i].team_num == ORANGE_TEAM and dist <= dist_list[orange_closest]:
+            if dist == dist_list[orange_closest]:
+                if state.players[i].car_data.position[0] < state.players[orange_closest].car_data.position[0]:
+                    orange_closest = i
+                    continue
+            else:
+                orange_closest = i
+                continue
+    return blue_closest, orange_closest
+
+# def _closest_to_ball(player: PlayerData, state: GameState) -> bool:
+#     player_dist = np.linalg.norm(player.car_data.position - state.ball.position)
+#     for p in state.players:
+#         if p.team_num == player.team_num and p.car_id != p.car_id:
+#             dist = np.linalg.norm(p.car_data.position - state.ball.position)
+#             if dist < player_dist:
+#                 return False
+#             if dist == player_dist:  # left goes!
+#                 if player.team_num == BLUE_TEAM and player.car_data.position[0] > p.car_data.position[0]:
+#                     return True
+#                 if player.team_num == ORANGE_TEAM and player.car_data.position[0] < p.car_data.position[0]:
+#                     return True
+#     return True
+
 
 class ZeroSumReward(RewardFunction):
-
+    # framework for zerosum comes from Nexto code (Rolv and Soren) (https://github.com/Rolv-Arild/Necto/blob/master/training/reward.py)
     def __init__(
         self,
         goal_w=10,
@@ -16,32 +65,35 @@ class ZeroSumReward(RewardFunction):
         # velocity_pb_w=0,
         # dist_pb_w=0,
         # face_ball_w=0,
-        velocity_bg_w=0.05,
+        velocity_bg_w=0.05,  # 0.05 -> 0.025 for tick skip, 10.05b -> 0.05 because skip handled now
         # kickoff_w=0,
         # ball_touch_w=0,
         # touch_grass_w=0,
         acel_ball_w=0.1,
-        boost_gain_w=1.5,
-        #boost_spend_w=boost_gain_w *  0.02223,
+        boost_gain_w=1,  # 1.5 -> 1? at 7.18b, was maybe 1 originally?
+        # boost_spend_w=0.015,  # 0.033 -> 0.025 7.18b, 0.025 -> 0.033 8.44b, ->0.015 10.05b for tick skip
+
         # ball_touch_dribble_w=0,
-        jump_touch_w=2,
+        jump_touch_w=3,  # 2 -> 3 at 8.44b
         # wall_touch_w=0,
-        cons_air_touches_w=5,
-        demo_w=4,  # 3->4 at 6.87b
+        cons_air_touches_w=8,  # 5 -> 8 at 8.44b
+        demo_w=6,  # 3->4 at 6.87b -> 6 at 9.36b
         # got_demoed_w=0,
-        tick_skip=8,
+        kickoff_w=0.1,  # 0.05 -> 0.1 at 8.44b, 0.05 at 10.05b for tick skip -> 0.1 because skip handled now
+        tick_skip=FRAME_SKIP,
         team_spirit=1,
     ):
         self.goal_w = goal_w
         # self.concede_w = concede_w
         # self.velocity_pb_w = velocity_pb_w
-        self.velocity_bg_w = velocity_bg_w
+        self.velocity_bg_w = velocity_bg_w * (tick_skip / 8)
         # self.ball_touch_w = ball_touch_w
         # self.kickoff_w = kickoff_w
         # self.touch_grass_w = touch_grass_w
         self.acel_ball_w = acel_ball_w
         self.boost_gain_w = boost_gain_w
-        self.boost_spend_w = self.boost_gain_w * 0.02223
+        # self.boost_spend_w = boost_spend_w
+        self.boost_spend_w = 1.5 * self.boost_gain_w * ((33.3334 / (120 / tick_skip)) * 0.01)  # from Bum, *1.5 12.7b
         # self.ball_touch_dribble_w = ball_touch_dribble_w
         self.jump_touch_w = jump_touch_w
         # self.wall_touch_w = wall_touch_w
@@ -50,12 +102,15 @@ class ZeroSumReward(RewardFunction):
         # self.got_demoed_w = got_demoed_w
         # self.dist_pb_w = dist_pb_w
         # self.face_ball_w = face_ball_w
+        self.kickoff_w = kickoff_w * (tick_skip / 8)
         self.rewards = None
         self.current_state = None
         self.last_state = None
         self.touch_timeout = 8 * 120 // tick_skip  # 120 ticks at 8 tick skip is 8 seconds
         self.kickoff_timeout = 5 * 120 // tick_skip
         self.kickoff_timer = 0
+        self.closest_reset_blue = -1
+        self.closest_reset_orange = -1
         self.blue_touch_timer = self.touch_timeout + 1
         self.orange_touch_timer = self.touch_timeout + 1
         self.blue_toucher = None
@@ -75,7 +130,7 @@ class ZeroSumReward(RewardFunction):
             self.kickoff_timer += 1
         # Calculate rewards
         player_rewards = np.zeros(len(state.players))
-        # player_self_rewards = np.zeros(len(state.players))
+        player_self_rewards = np.zeros(len(state.players))
         # ball_height = state.ball.position[2]
 
         for i, player in enumerate(state.players):
@@ -112,7 +167,7 @@ class ZeroSumReward(RewardFunction):
                 #     player_self_rewards[i] += self.wall_touch_w * (state.ball.position[2] - min_height) / rnge
 
                 # cons air touches, max reward of 5, normalized to 1, initial reward 1.4, only starts at second touch
-                if state.ball.position[2] > 120 and last.ball_touched:
+                if state.ball.position[2] > 140 and last.ball_touched and not player.on_ground:
                     self.cons_touches += 1
                     player_rewards[i] += self.cons_air_touches_w * min((1.4 ** self.cons_touches), 5) / 5
                 else:
@@ -187,6 +242,12 @@ class ZeroSumReward(RewardFunction):
             # last_car_vel = last.car_data.linear_velocity
             # player_rewards[i] += self.acel_car_w * (norm(curr_car_vel - last_car_vel) / CAR_MAX_SPEED)
 
+            # kickoff reward
+            if state.ball.position[0] == 0 and state.ball.position[1] == 0 and \
+                    (self.closest_reset_blue == i or self.closest_reset_orange == i) and \
+                    self.kickoff_timer < self.kickoff_timeout:
+                player_self_rewards[i] += self.kickoff_w * -1
+
         mid = len(player_rewards) // 2
 
         # Handle goals with no scorer for critic consistency,
@@ -216,7 +277,7 @@ class ZeroSumReward(RewardFunction):
         player_rewards[mid:] -= blue_mean
 
         self.last_state = state
-        self.rewards = player_rewards # + player_self_rewards
+        self.rewards = player_rewards + player_self_rewards
         # print(self.rewards)
 
     def reset(self, initial_state: GameState):
@@ -230,6 +291,8 @@ class ZeroSumReward(RewardFunction):
         self.blue_touch_timer = self.touch_timeout + 1
         self.orange_touch_timer = self.touch_timeout + 1
         self.cons_touches = 0
+        self.kickoff_timer = 0
+        self.closest_reset_blue, self.closest_reset_orange = _closest_to_ball(initial_state)
 
     def get_reward(self, player: PlayerData, state: GameState, previous_action: np.ndarray) -> float:
         rew = self.rewards[self.n]
